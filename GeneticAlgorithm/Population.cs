@@ -23,30 +23,39 @@ public class IndividualRestrictions
 
 public class Population
 {
-    public List<Individual> Individuals { get; set; } = new();
 
-    public static Population GenerateInitialPopulation(int popSize, int individualDimension, IndividualRestrictions? restrictions = null)
+    public static List<Individual> GenerateInitialPopulation(int popSize, int individualDimension, IndividualRestrictions? restrictions = null)
     {
         restrictions ??= new();
+        var population = new List<Individual>();
 
         for(var popIndex = 0; popIndex < popSize; popIndex++)
         {
+            var individual = new Individual();
             for(var i = 0; i < individualDimension; i++)
             {
                 var value = 0.0;
                 var rnd = new Random();
 
-                switch (restrictions.ValueType)
+                switch(restrictions.ValueType)
                 {
                     case IndividualValueType.doubleValue:
-                        value = rnd.NextDouble();
+                        var range = restrictions.Max - restrictions.Min;
+                        value = rnd.NextDouble() * Math.Abs(range) + restrictions.Min;
                         break;
                     case IndividualValueType.intValue:
+                        value = rnd.Next(Convert.ToInt32(restrictions.Min), Convert.ToInt32(restrictions.Max));
                         break;
                     default:
                         throw new ArgumentOutOfRangeException();
                 }
+
+                individual.X.Add(value);
             }
+
+            population.Add(individual);
         }
+
+        return population;
     }
 }
