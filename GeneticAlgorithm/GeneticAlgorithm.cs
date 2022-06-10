@@ -16,7 +16,7 @@ public class IndividualInformation
 
 public class GeneticAlgorithm
 {
-    public IndividualInformation RunOnce(List<Individual> individuals, double idealSolution, double errorRange)
+    public void RunOnce(List<Individual> individuals, double idealSolution, double errorRange)
     {
         var inds = individuals.Select(x => new IndividualInformation()
         {
@@ -26,18 +26,24 @@ public class GeneticAlgorithm
 
         inds = CalcFitness(inds).ToList();
 
-        var best = inds.First();
+        var bestInf = inds.First();
+        var best = new Individual(){
+            X = bestInf.Individual.X.ToList()
+        };
 
-        if(Math.Abs(best.Value - idealSolution) < errorRange)
-            return best;
+        if(Math.Abs(bestInf.Value - idealSolution) < errorRange)
+            return;
 
         var selectedIndividuals = SelectIndividuals(inds, individuals.Count);
 
         var childs = CrossOver(selectedIndividuals);
 
+        childs = Mutate(childs, 0.1);
 
+        // Elitism
+        childs[0] = best;
 
-        return best;
+        return;
     }
 
     public double CalcIndividual(Individual individual)
@@ -112,4 +118,25 @@ public class GeneticAlgorithm
 
         return new() { new() { X = x1Arr }, new() { X = x2Arr } };
     }
+
+    public List<Individual> Mutate(List<Individual> individuals, double mutationRate, double maxValue, double minValue){
+        var rnd = new Random();
+        individuals.ForEach(ind => ind.X = ind.X.Select(x => {
+            if(rnd.NextDouble() < mutationRate){
+                if(rnd.NextDouble() < 0.5){
+                    var newX = x + rnd.NextDouble()*0.1;
+                    return newX < maxValue  ? newX : maxValue;
+                }
+                else{
+                    var newX = x - rnd.NextDouble()*0.1;
+                    return newX > minValue ? newX : minValue;
+                }
+            }else{
+                return x;
+            }
+
+        }).ToList());
+        return individuals;
+    }
+    
 }
