@@ -16,9 +16,18 @@ public class IndividualInformation
 
 public class GeneticAlgorithm
 {
-    public void RunOnce(List<Individual> individuals, double idealSolution, double errorRange)
+    public List<Individual> Individuals { get; set; }
+
+    public Individual Best { get; set; }
+
+    public GeneticAlgorithm(List<Individual> individuals)
     {
-        var inds = individuals.Select(x => new IndividualInformation()
+        Individuals = individuals;
+    }
+
+    public bool RunOnce(double idealSolution, double errorRange)
+    {
+        var inds = Individuals.Select(x => new IndividualInformation()
         {
             Individual = x,
             Value = CalcIndividual(x)
@@ -27,23 +36,25 @@ public class GeneticAlgorithm
         inds = CalcFitness(inds).ToList();
 
         var bestInf = inds.First();
-        var best = new Individual(){
+        Best = new Individual()
+        {
             X = bestInf.Individual.X.ToList()
         };
 
         if(Math.Abs(bestInf.Value - idealSolution) < errorRange)
-            return;
+            return true;
 
-        var selectedIndividuals = SelectIndividuals(inds, individuals.Count);
+        var selectedIndividuals = SelectIndividuals(inds, Individuals.Count);
 
         var childs = CrossOver(selectedIndividuals);
 
-        childs = Mutate(childs, 0.1);
+        childs = Mutate(childs, 0.5, 10, 0);
 
         // Elitism
-        childs[0] = best;
+        childs[0] = Best;
 
-        return;
+        Individuals = childs;
+        return false;
     }
 
     public double CalcIndividual(Individual individual)
@@ -63,7 +74,7 @@ public class GeneticAlgorithm
 
         individuals.ForEach(x => x.Fitness = x.Value + min);
 
-        var result = individuals.OrderBy(x => x.Fitness);
+        var result = individuals.OrderByDescending(x => x.Fitness);
 
         return result;
     }
@@ -77,6 +88,8 @@ public class GeneticAlgorithm
             individual.FitnessAccumulated = sum;
             sum += individual.Fitness;
         }
+
+        sum -= individuals.Last().Fitness;
 
         var selectedIndividuals = new List<IndividualInformation>();
         for(var i = 0; i < qtd; i++)
@@ -119,24 +132,31 @@ public class GeneticAlgorithm
         return new() { new() { X = x1Arr }, new() { X = x2Arr } };
     }
 
-    public List<Individual> Mutate(List<Individual> individuals, double mutationRate, double maxValue, double minValue){
+    public List<Individual> Mutate(List<Individual> individuals, double mutationRate, double maxValue, double minValue)
+    {
         var rnd = new Random();
-        individuals.ForEach(ind => ind.X = ind.X.Select(x => {
-            if(rnd.NextDouble() < mutationRate){
-                if(rnd.NextDouble() < 0.5){
-                    var newX = x + rnd.NextDouble()*0.1;
-                    return newX < maxValue  ? newX : maxValue;
+        individuals.ForEach(ind => ind.X = ind.X.Select(x =>
+        {
+            if(rnd.NextDouble() < mutationRate)
+            {
+                if(rnd.NextDouble() < 0.5)
+                {
+                    var newX = x + rnd.NextDouble() * 0.01;
+                    return newX < maxValue ? newX : maxValue;
                 }
-                else{
-                    var newX = x - rnd.NextDouble()*0.1;
+                else
+                {
+                    var newX = x - rnd.NextDouble() * 0.01;
                     return newX > minValue ? newX : minValue;
                 }
-            }else{
+            }
+            else
+            {
                 return x;
             }
 
         }).ToList());
         return individuals;
     }
-    
+
 }
