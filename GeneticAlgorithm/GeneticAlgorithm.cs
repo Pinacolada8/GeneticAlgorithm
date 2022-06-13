@@ -18,7 +18,7 @@ public class GeneticAlgorithm
 {
     public List<Individual> Individuals { get; set; }
 
-    public Individual Best { get; set; }
+    public Individual Best { get; set; } = new Individual();
 
     public GeneticAlgorithm(List<Individual> individuals)
     {
@@ -51,7 +51,14 @@ public class GeneticAlgorithm
         childs = Mutate(childs, 0.5, 10, 0);
 
         // Elitism
-        childs[0] = Best;
+        for (var i = 0; i < 5; i++)
+        {
+            childs[i] = new Individual()
+            {
+                X = inds[i].Individual.X.ToList()
+            };
+        }
+
 
         Individuals = childs;
         return false;
@@ -141,12 +148,12 @@ public class GeneticAlgorithm
             {
                 if(rnd.NextDouble() < 0.5)
                 {
-                    var newX = x + rnd.NextDouble() * 0.01;
+                    var newX = x + rnd.NextDouble() * 0.1;
                     return newX < maxValue ? newX : maxValue;
                 }
                 else
                 {
-                    var newX = x - rnd.NextDouble() * 0.01;
+                    var newX = x - rnd.NextDouble() * 0.1;
                     return newX > minValue ? newX : minValue;
                 }
             }
